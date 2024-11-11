@@ -5,6 +5,7 @@ library(reticulate)
 
 use_python("/home/shiny/new_env/bin/python", required = TRUE)
 
+
 # Load your Python-based XGBoost model
 joblib <- import("joblib")
 model <- joblib$load("real_estate_model.pkl")
@@ -107,6 +108,13 @@ ui <- fluidPage(
                           h3("Variables"),
                           tableOutput("model_results")
                  )),
+        
+        tabPanel("RMSE Impact by Feature",
+                 tags$div(style = "padding: 10px;",
+                          h3("Change in Average Predicted Home Pricing Error (RMSE) When Removing Each Feature"),
+                          plotOutput("rmse_difference_plot")
+                 )),
+        
         tabPanel("Variable Effects", 
                  tags$div(style = "padding: 10px;",
                           plotOutput("variable_plot"),
@@ -140,6 +148,27 @@ server <- function(input, output, session) {
     "resoFacts/hasSpa" = list(rmse = 178547.76, r2 = 0.707, plot = "hasSpa_plot.png")
   )
   
+  # Create RMSE difference data frame without dplyr
+  rmse_diff_data <- reactive({
+    baseline_rmse <- variable_metrics[["None"]]$rmse
+    rmse_diffs <- sapply(variable_metrics[-1], function(x) x$rmse - baseline_rmse)
+    rmse_diff_df <- data.frame(
+      Variable = names(rmse_diffs),
+      RMSE_Difference = rmse_diffs
+    )
+    rmse_diff_df <- rmse_diff_df[order(-rmse_diff_df$RMSE_Difference), ] # Sort in descending order
+    rmse_diff_df
+  })
+  
+  # Render the RMSE Difference plot
+  output$rmse_difference_plot <- renderPlot({
+    ggplot(rmse_diff_data(), aes(x = reorder(Variable, -RMSE_Difference), y = RMSE_Difference)) +
+      geom_bar(stat = "identity") +
+      labs(title = "RMSE Change by Feature Removal",
+           x = "Variable Removed",
+           y = "$ RMSE Difference") +
+      coord_flip() # Flip to make the largest changes appear at the top
+  })
   # Display metrics dynamically based on selected variable
   output$model_metrics <- renderText({
     selected_variable <- input$remove_variable
@@ -250,3 +279,4 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui = ui, server = server)
+
