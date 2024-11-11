@@ -3,7 +3,7 @@ library(shiny)
 library(ggplot2)
 library(reticulate)
 
-use_python("/srv/shiny-server/new_env/bin/python", required = TRUE)
+use_python("/home/shiny/new_env/bin/python", required = TRUE)
 
 # Load your Python-based XGBoost model
 joblib <- import("joblib")
