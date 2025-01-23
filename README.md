@@ -1,4 +1,4 @@
-Jonathan Messiha and Decker Mechams Shiny Project for CA Housing AVM.
+Shiny Project for CA Housing AVM.
 
 In order to run correctly you must install packages such as joblib, xgboost and ggplot.
 
